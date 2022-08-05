@@ -34,4 +34,5 @@ public interface UserMapper {
                                 String password,
                                 String modifiedUser,
                                 Date modifiedTime);
+    
 }

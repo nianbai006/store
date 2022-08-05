@@ -3,10 +3,7 @@ package com.cy.store.service.impl;
 import com.cy.store.entity.User;
 import com.cy.store.mapper.UserMapper;
 import com.cy.store.service.IUserService;
-import com.cy.store.service.ex.InsertException;
-import com.cy.store.service.ex.PasswordNotMatchException;
-import com.cy.store.service.ex.UsernameDuplicatedException;
-import com.cy.store.service.ex.UsernameNotFoundException;
+import com.cy.store.service.ex.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
@@ -27,9 +24,9 @@ public class UserServiceImpl implements IUserService {
             throw new UsernameDuplicatedException("用户名被占用");
         }
 
-        String oldpassword = user.getPassword();
+        String oldPassword = user.getPassword();
         String salt = UUID.randomUUID().toString().toUpperCase();
-        String md5Password = getMD5Password(oldpassword, salt);
+        String md5Password = getMD5Password(oldPassword, salt);
         user.setSalt(salt);
         user.setPassword(md5Password);
 
@@ -69,8 +66,22 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public User updatePasswordByUid() {
-        return null;
+    public void changePassword(Integer uid, String username, String oldPassword, String newPassword) {
+        User result = userMapper.findByUid(uid);
+        if (result == null || result.getIsDelete() == 1) {
+            throw new UsernameNotFoundException("该用户未注册");
+        }
+        String rightPassword = result.getPassword();
+        String salt = result.getSalt();
+        String encryptedPassword = getMD5Password(oldPassword, salt);
+        if (!rightPassword.equals(encryptedPassword)) {
+            throw new PasswordNotMatchException("密码错误");
+        }
+        String newEncryptedPassword = getMD5Password(newPassword, salt);
+        Integer rows = userMapper.updatePasswordByUid(uid, newEncryptedPassword, username, new Date());
+        if (rows != 1) {
+            throw new UpdateException("在用户修改密码过程中产生了未知的异常");
+        }
     }
 
 

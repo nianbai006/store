@@ -34,8 +34,21 @@ public class UserController extends BaseController {
         return new JsonResult<User>(OK, data);
     }
 
-    @RequestMapping("hello")
-    public String hello() {
-        return "helloworld";
+    @RequestMapping("logout")
+    public JsonResult<Void> logout(HttpSession session) {
+        session.removeAttribute("uid");
+        session.removeAttribute("username");
+        return new JsonResult<>(OK);
     }
+
+    @RequestMapping("change_password")
+    public JsonResult<Void> changePassword(String oldPassword, String newPassword, HttpSession session) {
+        Integer uid = getUidFromSession(session);
+        String username = getUsernameFromSession(session);
+        uid = (Integer) session.getAttribute("uid");
+        userService.changePassword(uid, username, oldPassword, newPassword);
+        return new JsonResult<>(OK);
+    }
+
+
 }
